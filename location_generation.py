@@ -2,6 +2,7 @@ import random
 import country_converter as coco
 from geopy import geocoders
 import pandas as pd;
+import numpy as np
 import os;
 import re;
 from pandas import json_normalize;
@@ -71,7 +72,11 @@ def create_names():
     country_names = {}
     #TODO: change df fantasy to use df_new which is a smaller size
     for tag in tags:
-        country_names[tag] = coco.convert(names=tag, to="name_short")
+        # print(tag)
+        # One of the tags is assigned as "nan" for some reason? unsure why, i will assume that it is an issue with the data set rather than the data processing
+        # print(f"Tag: {tag}, Type: {type(tag)} ")
+        if isinstance(tag, str):
+            country_names[tag] = coco.convert(names=tag, to="name_short")
     print(country_names)
     gn = geocoders
 
@@ -84,7 +89,7 @@ def create_names():
             print(k, v)
             timezone = v["timezone"].split(r"/")[1]
 
-            df_fantasy = df_fantasy.append({"name": v["name"], "result": v["asciiname"], "capital": timezone, "country": country_names.get(v["country_code"])}, ignore_index=True)
+            df_fantasy = df_fantasy.append({"name": v["name"], "result": v["asciiname"], "capital": timezone, "country": country_names.get(v["country code"])}, ignore_index=True)
             print("DF fantasy ", df_fantasy)
         print(df_temp)
     print(df_fantasy)
@@ -250,7 +255,7 @@ def model_start(trainset_infos, lstm_units):
 
 
 def compile_model(model, hyperparams, history, training_infos):
-    optimizer = Adam(lr=hyperparams["lr"])
+    optimizer = tf.keras.optomizers.Adam(learning_rate=hyperparams["lr"])
     model.compile(loss=hyperparams["loss"], optimizer=optimizer, metrics=["accuracy"])
     history["hyperparams"].append((training_infos["total_epochs"], hyperparams))
     # print("\n\n\n", "History of params", history["hyperparams"])
