@@ -6,6 +6,7 @@ __pycache__/
 # C extensions
 *.so
 DataCopies/*.txt
+AI_OUTPUT/*.csv
 
 
 # Distribution / packaging

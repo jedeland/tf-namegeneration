@@ -3,6 +3,8 @@ import country_converter as coco
 from geopy import geocoders
 import pandas as pd;
 import numpy as np
+from multiprocessing.context import Process
+import multiprocessing
 import os;
 import re;
 from pandas import json_normalize;
@@ -11,7 +13,7 @@ import json
 import tensorflow.python.compat as tf
 from tensorflow.python.keras.layers import Activation, Input, SimpleRNN, Dense, LSTM
 from tensorflow.python.keras.models import Model, Sequential, model_from_json
-from tensorflow.keras.optimizers import Adam
+from tensorflow.python.keras.optimizer_v2.adam import Adam
 from tensorflow.keras import utils
 from tensorflow.python.framework.ops import disable_eager_execution
 
@@ -147,23 +149,36 @@ def create_names():
             pass
     names_dict = {}
     print("Data dict = ", data_dict, " Type =", type(data_dict))
+    manager = multiprocessing.Manager()
+    return_dict = manager.dict()
+
+    procs = []
     for g in nationality:
         print(g)
 
-        x, y, train_util, train_info = training_data(g, data_dict, 3)
+        proc = Process(target= generate_new_names, args= (data_dict, names_dict, g),)
+        procs.append(proc)
+        proc.start()
+    for p in procs:
+        p.join()
+    print("Did that work?")
+    return names_dict
+
+def generate_new_names(data_dict, names_dict, g):
+    x, y, train_util, train_info = training_data(g, data_dict, 3)
         # print(train_util)
-        current_model, training_infos, history = model_start(train_info, 128)  # Original used 128, 256 is too slow
-        compile_model(model=current_model,
+    current_model, training_infos, history = model_start(train_info, 128)  # Original used 128, 256 is too slow
+    compile_model(model=current_model,
                       hyperparams={"lr": 0.003, "loss": "categorical_crossentropy", "batch_size": 32},
                       history=history, training_infos=training_infos)
-        train_model(current_model, x, y, training_infos, history, 950)  # Epochs after 2000 seem efficient
-        print("Printing {} names".format(g))
-        name_list = []
-        name_list = set(name_list)
-        i = 0
-        vowels = "aeiou"
-        while i < 950:
-            name = generate_name(
+    train_model(current_model, x, y, training_infos, history, 950)  # Epochs after 2000 seem efficient
+    print("Printing {} names".format(g))
+    name_list = []
+    name_list = set(name_list)
+    i = 0
+    vowels = "aeiou"
+    while i < 950:
+        name = generate_name(
                 model=current_model,
                 trainset_infos=train_info,
                 #         sequence_length=trainset_infos['length_of_sequence'],
@@ -171,24 +186,20 @@ def create_names():
                 #         padding_start=padding_start,
                 #         padding_end=padding_end,
                 name_max_length=15)
-            if len(name) >= 3 and int(name.lower().count("z")) < 4:
-
-                vow_check = [vow for vow in name.lower() if vow in vowels]
-                if len(vow_check) >= 1:
-                    name_list.add(name.title())
-            i += 1
-        print(i)
-        print(len(name_list))
-        name_list = sorted(name_list)
-        names_dict.update({g: list(name_list)})
-        print(names_dict)
-        out_df = pd.DataFrame()
-        out_df["Name"] = name_list
-        out_df["Origin"] = g
-        out_df.to_csv(path_or_buf="AI_OUTPUT/{}.csv".format(g))
-
-    print("Did that work?")
-    return names_dict
+        if len(name) >= 3 and int(name.lower().count("z")) < 4:
+            vow_check = [vow for vow in name.lower() if vow in vowels]
+            if len(vow_check) >= 1:
+                name_list.add(name.title())
+        i += 1
+    print(i)
+    print(len(name_list))
+    name_list = sorted(name_list)
+    names_dict.update({g: list(name_list)})
+    print(names_dict)
+    out_df = pd.DataFrame()
+    out_df["Name"] = name_list
+    out_df["Origin"] = g
+    out_df.to_csv(path_or_buf="AI_OUTPUT/{}.csv".format(g))
 
 
 def training_data(target_group, data_dict, len_sequence):
@@ -255,7 +266,7 @@ def model_start(trainset_infos, lstm_units):
 
 
 def compile_model(model, hyperparams, history, training_infos):
-    optimizer = tf.keras.optomizers.Adam(learning_rate=hyperparams["lr"])
+    optimizer = Adam(learning_rate=hyperparams["lr"])
     model.compile(loss=hyperparams["loss"], optimizer=optimizer, metrics=["accuracy"])
     history["hyperparams"].append((training_infos["total_epochs"], hyperparams))
     # print("\n\n\n", "History of params", history["hyperparams"])
