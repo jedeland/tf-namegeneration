@@ -23,13 +23,15 @@ def city_data():
     cities_csv = pd.read_csv(
         "DataCopies/cities5000.txt",
          delimiter="\t",
+          #Tags for each column header
           names=["geonameid", "name", "asciiname", "alternatenames",
           "latitude", "longitude", "feature class", "feature code", "country code", "cc2", 
           "admin1 code", "admin2 code",
           "admin3 code", "admin4 code", "population", "elevation", "dem", "timezone", "modification date"])
-    print(cities_csv)
-    print(cities_csv.columns)
-    print(cities_csv["geonameid"])
+    # print(cities_csv)
+    # print(cities_csv.columns)
+    # print(cities_csv["geonameid"])
+    #column headers that we want to drop
     cities_csv.drop(["geonameid", "latitude", 
     "longitude", "feature class", "feature code", 
     "admin1 code", "admin2 code", "admin3 code", 
@@ -38,22 +40,26 @@ def city_data():
 
 
 def create_names():
+    # Grab correct city cata for dataframe
     df = city_data()
-    print(df)
+    #print(df)
+    # Get unique names
     names = pd.unique(df["timezone"])
-
+    # Retain original copy
     df_out = df.copy()
     df_new = pd.DataFrame(columns=df_out.columns)
+    # Loop over unique timezones
     for name in names:
         df_temp = df_out[df_out["timezone"] == name]
+        # Number of results
         df_size = int(df_temp["timezone"].size)
-        print("Size of dataframe is ", df_temp["timezone"].size)
-        print(df_temp)
+        # print("Size of dataframe is ", df_temp["timezone"].size)
+        # print(df_temp)
         try:
             if df_size >= 500:
                 df_new = pd.concat([df_new, df_temp.sample(500)], ignore_index=True)
             elif df_size >= 100:
-                print("I WORKED")
+                #print("I WORKED")
                 df_new = pd.concat([df_new, df_temp.sample(100)], ignore_index=True)
             elif df_size >= 50:
                 df_new = pd.concat([df_new, df_temp.sample(50)], ignore_index=True)
@@ -61,45 +67,49 @@ def create_names():
                 df_new = df_temp.sample(500)
         except:
             print("Error")
-    print(df_new)
-    print(df_new["timezone"].size)
+    # print(df_new)
+    # print(df_new["timezone"].size)
     df_new = df_new.drop_duplicates()
-    print(df_new.size)
-    print(pd.unique(df_new["timezone"]))
+    # print(df_new.size)
+    # print(pd.unique(df_new["timezone"]))
     #print(input(""))
     print(df.columns)
+    # Converting country code with coco, get country codes
     tags = pd.unique(df["country code"])
-    print(tags)
-    print(df["country code"])
+    # print(tags)
+    # print(df["country code"])
+    # Dict init
     country_names = {}
-    #TODO: change df fantasy to use df_new which is a smaller size
     for tag in tags:
         # print(tag)
         # One of the tags is assigned as "nan" for some reason? unsure why, i will assume that it is an issue with the data set rather than the data processing
         # print(f"Tag: {tag}, Type: {type(tag)} ")
         if isinstance(tag, str):
+            # Add values to country_names key using converted country tag
             country_names[tag] = coco.convert(names=tag, to="name_short")
-    print(country_names)
-    gn = geocoders
+    #print(country_names)
+    # gn = geocoders
 
     names = pd.unique(df["timezone"])
+    # New data structure we will push to
     df_fantasy = pd.DataFrame(columns=["name", "result", "capital", "country"])
-    print(df["timezone"].value_counts())
+    #print(df["timezone"].value_counts())
     for f in names:
         df_temp = df_new[df_new["timezone"] == f]
         for k, v in df_temp.iterrows():
-            print(k, v)
+            #print(k, v)
+            # Get name of capital city using split
             timezone = v["timezone"].split(r"/")[1]
 
             df_fantasy = df_fantasy.append({"name": v["name"], "result": v["asciiname"], "capital": timezone, "country": country_names.get(v["country code"])}, ignore_index=True)
-            print("DF fantasy ", df_fantasy)
-        print(df_temp)
-    print(df_fantasy)
-    print("LOOK HERE ", df_fantasy["capital"].value_counts())
+            #print("DF fantasy ", df_fantasy)
+        #print(df_temp)
+    # print(df_fantasy)
+    # print("LOOK HERE ", df_fantasy["capital"].value_counts())
     #print(input(""))
     df = df_fantasy
-    print(df)
-    print(df.size)
+    # print(df)
+    # print(df.size)
     #print(input(""))
 
 
@@ -107,10 +117,11 @@ def create_names():
     # https://github.com/JKH4/name-generator using this as a basis for the name generator, thanks to JKH4
     # https://towardsdatascience.com/generating-pok%C3%A9mon-names-using-rnns-f41003143333
     print("Attempting to create new names using previous names")
+    #Tagging names with abnormal values
     padd_start, padd_end = "#", "*"
     df["result"] = df["result"].map(lambda n: str(padd_start) + str(n) + str(padd_end))
-    df.describe()
-    print('Example of names to be cleaned:')
+    # df.describe()
+    # print('Example of names to be cleaned:')
     # df = df.loc[~(df["option"] == "Clan")]
     # df = df.loc[~(df["option"] == "Virtue")]
     # df = df.loc[~(df["option"] == "Duergar Clan")]
@@ -122,8 +133,9 @@ def create_names():
     # "Virtue", "Duergar Clan", "Family"])]
 
     #print('Max name size: {}'.format(df['name'].map(len).max()))
-    print("--\n")
+    # print("--\n")
 
+    # Get identifiers again
     nationality = list(pd.unique(df["country"]))
     origins = list(pd.unique(df["capital"]))
     print(origins)
@@ -137,25 +149,25 @@ def create_names():
             data_dict[r]["char_to_num"] = {ch: i for i, ch in enumerate(data_dict[r]["char_list"])}
             data_dict[r]["ix_to_char"] = {i: ch for i, ch in enumerate(data_dict[r]["char_list"])}
 
-            for k, v in data_dict.items():
-                print('group: {}'.format(k))
-                print('  - number of names: {} ({}, ...)'.format(len(v['name_list']), v['name_list'][:5].tolist()))
-                print('  - number of chars: {}'.format(len(v['char_list'])))
-                print('  - chars: {}'.format(v['char_list']))
-                print('  - char_to_num: {}'.format(v['char_to_num']))
-                print('  - ix_to_char: {}'.format(v['ix_to_char']))
-                print('######################')
+            # for k, v in data_dict.items():
+            #     print('group: {}'.format(k))
+            #     print('  - number of names: {} ({}, ...)'.format(len(v['name_list']), v['name_list'][:5].tolist()))
+            #     print('  - number of chars: {}'.format(len(v['char_list'])))
+            #     print('  - chars: {}'.format(v['char_list']))
+            #     print('  - char_to_num: {}'.format(v['char_to_num']))
+            #     print('  - ix_to_char: {}'.format(v['ix_to_char']))
+            #     print('######################')
         except:
             pass
     names_dict = {}
     print("Data dict = ", data_dict, " Type =", type(data_dict))
-    manager = multiprocessing.Manager()
-    return_dict = manager.dict()
-
+    # manager = multiprocessing.Manager()
+    # return_dict = manager.dict()
+    # Process list
     procs = []
     for g in nationality:
-        print(g)
-
+        # print(g)
+        # Create new process using function generate_new_names, args in tuple form
         proc = Process(target= generate_new_names, args= (data_dict, names_dict, g),)
         procs.append(proc)
         proc.start()
@@ -167,7 +179,7 @@ def create_names():
 def generate_new_names(data_dict, names_dict, g):
     x, y, train_util, train_info = training_data(g, data_dict, 3)
         # print(train_util)
-    current_model, training_infos, history = model_start(train_info, 128)  # Original used 128, 256 is too slow
+    current_model, training_infos, history = model_start(train_info, 172)  # Original used 128, 256 is too slow
     compile_model(model=current_model,
                       hyperparams={"lr": 0.003, "loss": "categorical_crossentropy", "batch_size": 32},
                       history=history, training_infos=training_infos)
@@ -191,11 +203,11 @@ def generate_new_names(data_dict, names_dict, g):
             if len(vow_check) >= 1:
                 name_list.add(name.title())
         i += 1
-    print(i)
-    print(len(name_list))
+    # print(i)
+    # print(len(name_list))
     name_list = sorted(name_list)
     names_dict.update({g: list(name_list)})
-    print(names_dict)
+    # print(names_dict)
     out_df = pd.DataFrame()
     out_df["Name"] = name_list
     out_df["Origin"] = g
@@ -203,8 +215,8 @@ def generate_new_names(data_dict, names_dict, g):
 
 
 def training_data(target_group, data_dict, len_sequence):
-    print(target_group)
-    print(data_dict)
+    # print(target_group)
+    # print(data_dict)
     train_names = data_dict[target_group]["name_list"].tolist()
     padd_start, padd_end = train_names[0][0], train_names[0][
         -1]  # First element of list, with first and last character id'd
@@ -337,7 +349,7 @@ def generate_name(
         if new_char == trainset_infos['padding_end']:
             break
     generated_name = generated_name.strip("#*")
-    print(generated_name.title())
+    # print(generated_name.title())
     # print('{} (probs: {:.6f}, gap: {:.6f})'.format(generated_name, probability, gap))
     return generated_name  # , {'probability': probability, 'gap': gap}
 
