@@ -91,6 +91,7 @@ def create_names():
     # gn = geocoders
 
     names = pd.unique(df["timezone"])
+    print(list(pd.unique(df["timezone"])))
     # New data structure we will push to
     df_fantasy = pd.DataFrame(columns=["name", "result", "capital", "country"])
     #print(df["timezone"].value_counts())
@@ -138,7 +139,10 @@ def create_names():
     # Get identifiers again
     nationality = list(pd.unique(df["country"]))
     origins = list(pd.unique(df["capital"]))
+    print(list(pd.unique(df.keys())))
+    print(list(pd.unique(df["timezone"])))
     print(origins)
+    ini = input("HERE!")
     data_dict = {}
     for r in nationality:
         try:
