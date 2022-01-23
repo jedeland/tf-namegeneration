@@ -92,17 +92,31 @@ def create_names():
 
     names = pd.unique(df["timezone"])
     print(list(pd.unique(df["timezone"])))
+    print(names)
+    print("Names have been listed ...")
+    # ini = input("here!")
     # New data structure we will push to
     df_fantasy = pd.DataFrame(columns=["name", "result", "capital", "country"])
     #print(df["timezone"].value_counts())
+    bad_list = ["america", "pacific", "zambia", "tajikistan", "sri lanka", "new zealand"]
     for f in names:
-        df_temp = df_new[df_new["timezone"] == f]
-        for k, v in df_temp.iterrows():
-            #print(k, v)
-            # Get name of capital city using split
-            timezone = v["timezone"].split(r"/")[1]
+        print(f.lower())
+        print("F lower is ", f.lower())
+        print("Mixed list is ", "\t".join(bad_list))
+        print(re.match(f.lower(),"\t".join(bad_list) ))
+        print(any(f.split(r"/")[0].lower() not in str_val for str_val in bad_list))
+        if any(f.lower() not in str_val for str_val in bad_list):
+            print("Got here!")
+            print(f)
+            df_temp = df_new[df_new["timezone"] == f]
+            for k, v in df_temp.iterrows():
+                #print(k, v)
+                # Get name of capital city using split
+                timezone = v["timezone"].split(r"/")[1]
+                # print(country_names.get(v["country code"]))
+                if any(country_names.get(v["country code"]) not in str_val for str_val in bad_list):
 
-            df_fantasy = df_fantasy.append({"name": v["name"], "result": v["asciiname"], "capital": timezone, "country": country_names.get(v["country code"])}, ignore_index=True)
+                    df_fantasy = df_fantasy.append({"name": v["name"], "result": v["asciiname"], "capital": timezone, "country": country_names.get(v["country code"])}, ignore_index=True)
             #print("DF fantasy ", df_fantasy)
         #print(df_temp)
     # print(df_fantasy)
@@ -140,7 +154,7 @@ def create_names():
     nationality = list(pd.unique(df["country"]))
     origins = list(pd.unique(df["capital"]))
     print(list(pd.unique(df.keys())))
-    print(list(pd.unique(df["timezone"])))
+    #print(list(pd.unique(df["timezone"])))
     print(origins)
     ini = input("HERE!")
     data_dict = {}
