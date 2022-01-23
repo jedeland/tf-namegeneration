@@ -100,13 +100,14 @@ def create_names():
     #print(df["timezone"].value_counts())
     bad_list = ["america", "pacific", "zambia", "tajikistan", "sri lanka", "new zealand"]
     for f in names:
-        print(f.lower())
-        print("F lower is ", f.lower())
-        print("Mixed list is ", "\t".join(bad_list))
-        print(re.match(f.lower(),"\t".join(bad_list) ))
-        print(any(f.split(r"/")[0].lower() not in str_val for str_val in bad_list))
-        if any(f.lower() not in str_val for str_val in bad_list):
+        # print(f.lower())
+        # print("F lower is ", f.lower())
+        # print("Mixed list is ", "\t".join(bad_list))
+        # print(re.match(f.lower(),"\t".join(bad_list) ))
+        # print(any(str_val in f.lower() for str_val in bad_list))
+        if any(str_val in f.lower() for str_val in bad_list):
             print("Got here!")
+        else:
             print(f)
             df_temp = df_new[df_new["timezone"] == f]
             for k, v in df_temp.iterrows():
@@ -114,8 +115,10 @@ def create_names():
                 # Get name of capital city using split
                 timezone = v["timezone"].split(r"/")[1]
                 # print(country_names.get(v["country code"]))
-                if any(country_names.get(v["country code"]) not in str_val for str_val in bad_list):
-
+                if any(str_val in country_names.get(v["country code"]) for str_val in bad_list):
+                    #Naughty value found
+                    pass
+                else:
                     df_fantasy = df_fantasy.append({"name": v["name"], "result": v["asciiname"], "capital": timezone, "country": country_names.get(v["country code"])}, ignore_index=True)
             #print("DF fantasy ", df_fantasy)
         #print(df_temp)
